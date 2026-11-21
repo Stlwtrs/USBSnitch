@@ -1,31 +1,35 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Install USBSnitch as a systemd service.
+set -euo pipefail
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root (sudo ./install.sh)"
-    exit 1
+if [[ $EUID -ne 0 ]]; then
+  echo "Please run as root: sudo ./install.sh" >&2
+  exit 1
 fi
 
-echo "[*] Installing USBSnitch..."
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# Install the dependencies
-if command -v pacman &> /dev/null; then
-  pacman -S --needed --noconfirm python-pyudev libnotify
-elif command -v apt &> /dev/null; then
-  apt update && apt install -y python3-pyudev libnotify-bin
-else
-  echo "[-] Warning: Unsupported package manager. Please install python-pyudev and libnotify manually."
+if ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 9))' 2>/dev/null; then
+  echo "[-] USBSnitch needs Python 3.9 or newer." >&2
+  exit 1
 fi
 
-# Copy the Python script
-cp usb-snitch.py /usr/local/bin/usb-snitch.py
-chmod +x /usr/local/bin/usb-snitch.py
+if ! command -v notify-send >/dev/null 2>&1; then
+  echo "[*] Installing notify-send (libnotify)..."
+  if command -v pacman >/dev/null 2>&1; then
+    pacman -S --needed --noconfirm libnotify
+  elif command -v apt-get >/dev/null 2>&1; then
+    apt-get install -y libnotify-bin
+  elif command -v dnf >/dev/null 2>&1; then
+    dnf install -y libnotify
+  else
+    echo "[-] Install libnotify manually for desktop notifications; logging works without it."
+  fi
+fi
 
-# Copy systemd service
-cp usb-snitch.service /etc/systemd/system/usb-snitch.service
-
-# Reload systemd
+install -Dm755 usb-snitch.py /usr/local/bin/usb-snitch
+install -Dm644 usb-snitch.service /etc/systemd/system/usb-snitch.service
 systemctl daemon-reload
 
-echo "[+] Installation complete!"
-echo "Enable the service to start on boot via:"
-echo "  sudo systemctl enable --now usb-snitch"
+echo "[+] Installed. Start it now and on every boot with:"
+echo "    sudo systemctl enable --now usb-snitch"
