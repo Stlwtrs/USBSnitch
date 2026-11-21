@@ -1,15 +1,32 @@
 [Unit]
-Description=USBSnitch Hardware Monitor
-After=network.target
+Description=USBSnitch USB device alerts
+Documentation=https://github.com/Stlwtrs/USBSnitch
+After=systemd-udevd.service usbguard.service
 
 [Service]
 Type=simple
-User=root
-Environment=DISPLAY=:0
-Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
-ExecStart=/usr/bin/python3 /usr/local/bin/usb-snitch.py
-Restart=always
+ExecStart=/usr/local/bin/usb-snitch
+Restart=on-failure
 RestartSec=3
+# Logs: journalctl -u usb-snitch -f
+
+# Sandboxing. USBSnitch only reads sysfs, listens for kernel events and
+# starts notify-send as each desktop user, so it needs very little.
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_NETLINK AF_UNIX
+# CAP_SETUID/SETGID: run notify-send as the desktop user, not as root.
+# CAP_DAC_READ_SEARCH: find each user's session bus under /run/user.
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_DAC_READ_SEARCH
+# Don't add PrivateNetwork=yes: the kernel only sends USB hotplug events to
+# the host's network namespace.
 
 [Install]
 WantedBy=multi-user.target
