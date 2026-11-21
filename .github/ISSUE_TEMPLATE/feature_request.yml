@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an improvement or a new detection heuristic
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like USBSnitch to do?
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Why?
+      description: For new detections, describe the attack or device it catches and any legitimate hardware it might flag by mistake.
+    validations:
+      required: true
