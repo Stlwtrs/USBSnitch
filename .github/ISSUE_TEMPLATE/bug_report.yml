@@ -1,0 +1,43 @@
+name: Bug report
+description: USBSnitch missed a device, misidentified it, or didn't notify you
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security issue?** Please don't use this form. Report it privately as described in SECURITY.md.
+        Remove device serial numbers from any output you paste.
+  - type: input
+    id: version
+    attributes:
+      label: USBSnitch version
+      placeholder: "output of: usb-snitch --version"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Distribution, desktop environment and USBGuard version
+      placeholder: "Arch Linux, KDE Plasma 6, usbguard 1.1.3"
+    validations:
+      required: true
+  - type: textarea
+    id: device
+    attributes:
+      label: Device details
+      description: "Output of `usb-snitch --list --json` with the device connected, and `lsusb -v -d VENDOR:PRODUCT` if a device was misidentified."
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Output of: journalctl -u usb-snitch --since '10 min ago'"
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
