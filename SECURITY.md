@@ -1,52 +1,55 @@
 # Security Policy
 
+USBSnitch runs as root and processes text supplied by USB hardware that may be hostile, so security reports are taken seriously and handled privately.
+
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+| Version | Supported |
+|---|:--:|
+| 2.x (`main`) | ✅ |
+| 1.x | ❌ Builds shell commands from device-supplied names. Please upgrade. |
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x  | :white_check_mark: |
-| < 1.0  | :x:                |
+## Scope
 
+**In scope:**
+
+- Command or code execution through device-supplied data (names, serials, descriptors) or kernel event contents
+- Privilege escalation through the service, the installer or notification handling
+- Ways a device can avoid being reported, or be reported as something it isn't, beyond the documented limitations
+- Weaknesses in the systemd unit's sandboxing
+
+**Out of scope:**
+
+- Attacks by someone who already has root
+- Devices that successfully imitate legitimate hardware (a documented limitation of descriptor-based detection)
+- Vulnerabilities in USBGuard, the kernel, or the desktop's notification server. Report those upstream.
 
 ## Reporting a Vulnerability
 
-Because **USBSnitch** runs as a system level daemon (`root`) and interfaces directly with the kernel `udev` events, security vulnerabilities in this code are taken extremely seriously.
+**Please do not open a public issue for security problems.**
 
-**Please do not report security vulnerabilities through public Github issues.**
+Report privately through GitHub: open the repository's **Security** tab and select **Report a vulnerability**. If that isn't possible, email **stlwtrs@proton.me**.
 
-If you believe you have found a security vulnerability in USBSnitch, please report it privately.
+Please include:
 
-Please include the following details in your report:
-
-*  The type of issue (e.g command injection, privilege escalation, symlink attacks, etc..).
-
-*  Full path of source files related to the issue.
-
-*  Step-by-step instructions to reproduce the issue.
-
-*  PoC or exploit code (if applicable).
-
-*  Impact of the issue, including how an attacker may be able to exploit it.
+- The USBSnitch version (`usb-snitch --version`), distribution and Python version
+- Steps to reproduce, and the device or descriptors involved (a hex dump of the sysfs `descriptors` file is ideal)
+- The impact: what an attacker gains
 
 ## What to Expect
 
-*  **Acknowledgement:** I will acknowledge the receiving of your vulnerability report within 48 hours of submission.
+USBSnitch is maintained by one person, so responses are best effort:
 
-*  **Investigation:** I will investigate the issue and keep you updated on the progress.
+- **Acknowledgement** within 7 days
+- **A fix or documented mitigation** as soon as practical
+- **Credit** in the changelog, unless you prefer to stay anonymous
 
-*  **Fixes & Disclosure:** If the vulnerability is confirmed, I will develop a patch and coordinate the public disclosure timeline with you.
+Please allow reasonable time for a fix before public disclosure.
 
-## Security Design Choices
+## Design Principles
 
-*  **No Shell Execution;** USBSnitch uses Python's `subprocess.run` with list arguments (rather than `shell=True`) to prevent command injection attacks when passing devices names to `notify-send`.
-
-*  **Read-Only Hardware Access:** The script only reads from `/sys/bus/usb/devices/` to check authorization status. It does not write to kernel files or block devices directly *(that is USBGuard's job)*.
-
-*  **Root Privileges:** The script requires `root` to read kernel hardware events. It is designed to run as a locked-down systemd service.
-
-## Thank You!
-
-Thank you for helping to keep USBSnitch and the open-source community safe!
+- No shell execution; every subprocess uses an argument list
+- Notifications run as the receiving user, never as root
+- Device-supplied text is treated as hostile: sanitized, length-limited and markup-escaped
+- Read-only access to sysfs; USBSnitch never changes authorization decisions
+- Minimal service privileges: see `usb-snitch.service`
